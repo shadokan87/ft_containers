@@ -47,20 +47,76 @@ class BST
 	typedef ft::pair<const Key, T>					value_type;
 	typedef node<Key, T> node;
 	typedef ft::BST_iterator<value_type, node> iterator;
-	typedef ft::BST_iterator<value_type, node> reverse_iterator;
+	typedef ft::BST_iterator_rev<value_type, node> reverse_iterator;
 	typedef ft::BST_iterator<const value_type, node> const_iterator;
 	typedef ft::BST_iterator_rev<const value_type, node> const_reverse_iterator;
 	/* -- constructor / destructor -- */
 	BST(const Compare& $cmp = Compare()) : root(NULL) , _size(0), cmp($cmp) {}
 	~BST() {}
 	/* -- getters -- */
-	node* getRoot() { return (root); }
+	node* getRoot() const { return (root); }
+	void	setRoot(node* $root) { root = $root; }
+	void	setSize(size_t $size) { _size = $size; }
 	size_t	getSize(void) const { return (_size); }
 	node* newNode(const value_type& $pair)
 	{
 		node* ret = $mem_get(1);
 		$mem_put(ret, $pair);
 		return (ret);
+	}
+	node* maxL(node* loc) const
+	{
+		node* i = loc;
+		while (i && i->left)
+			i = i->left;
+		return (i);
+	}
+	node* maxR(node* loc) const
+	{
+		node* i = loc;
+		while (i && i->right)
+			i = i->right;
+		return (i);
+	}
+	node*	inorderSucessor(node* p) const
+	{
+		if (p->right)
+			return (maxL(p->right));
+		node* i = p->parent;
+		while (i && p == i->right)
+		{
+			p = i;
+			i = i->parent;
+		}
+		return (i);
+	}
+	node*	inorderPredecessor(node* p) const
+	{
+		if (p->left)
+			return (maxL(p->left));
+		node* i = p->parent;
+		while (i && p == i->left)
+		{
+			p = i;
+			i = i->parent;
+		}
+		return (i);
+	}
+	node*	lower_bound(const Key& x) const
+	{
+		ft::pair<Key, T> to_cmp(ft::make_pair(x, T()));
+		node* beg = maxL(root);
+		while (beg && cmp(beg->getPair(), to_cmp) != false)
+			beg = inorderSucessor(beg);
+		return (beg);
+	}
+	node*	upper_bound(const Key& x) const
+	{
+		ft::pair<Key, T> to_cmp(ft::make_pair(x, T()));
+		node* beg = maxL(root);
+		while (beg && cmp(to_cmp, beg->getPair()) != true)
+			beg = inorderSucessor(beg);
+		return (beg);
 	}
 	node* newNode(const value_type& $pair, node* cpy)
 	{
@@ -146,7 +202,7 @@ class BST
 			ret->parent = parent;
 			return (node_ret(SAVE, ret, ret));
 		}
-		if ($pair.first < KEY(at))
+		if (cmp($pair, at->getPair()))
 			at->left = insertAt(at->left, $pair, at);
 		else
 			at->right = insertAt(at->right, $pair, at);
@@ -154,9 +210,9 @@ class BST
 		int balance = balanceFactor(at);
 		if (balance > 1)
 		{
-			if ($pair.first < KEY(at->left))
+			if (cmp($pair, at->left->getPair()))
 				return (rightRotate(at));
-			if ($pair.first > KEY(at->left))
+			if (cmp(at->left->getPair(), $pair))
 			{
 				at->left = leftRotate(at->left);
 				return rightRotate(at);
@@ -164,9 +220,9 @@ class BST
 		}
 		if (balance < -1)
 		{
-			if ($pair.first > KEY(at->right))
+			if (cmp(at->right->getPair(), $pair))
 				return (leftRotate(at));
-			if ($pair.first < KEY(at->right))
+			if (cmp($pair, at->right->getPair()))
 			{
 				at->right = rightRotate(at->right);
 				return (leftRotate(at));
@@ -174,7 +230,7 @@ class BST
 		}
 		return (at);
 	}
-	node* search(value_type $pair)
+	node* search(value_type $pair) const
 	{
 		node* i = root;
 		while (i && $pair.first != i->getPair().first)
@@ -190,6 +246,25 @@ class BST
 	{
 		$mem_erase(d);
 		$mem_free(d, 1);
+	}
+	node*	balance_rm(node* at)
+	{
+		at->height = max(at->left, at->right) + 1;
+		int balance = balanceFactor(at);
+		if (balance > 1)
+		{
+			if (balanceFactor(at->left) >= 0)
+				return (rightRotate(at));
+			at->left = leftRotate(at->left);
+			return (rightRotate(at));
+		}
+		if (balance < -1)
+		{
+			if (balanceFactor(at->right) <= 0)
+				return (leftRotate(at));
+			at->right = rightRotate(at->right);
+			return (leftRotate(at));
+		}
 	}
 	bool	rm(value_type $pair)
 	{
@@ -235,48 +310,37 @@ class BST
 		}
 		else if HAS_TWO_CHILDREN(s)
 		{
-			node* __inorder = inorder(s->right);
-			value_type val(__inorder->getPair());
-			rm(val);
-			node* nw = newNode(val, s);
-			if (s->left)
-				s->left->parent = nw;
-			if (s->right)
-				s->right->parent = nw;
-			if (s->parent)
-				s->parent->left == s ? s->parent->left = nw : s->parent->right = nw;
+			node* tmp = maxL(s->right);
+			node* nw = newNode(tmp->getPair(), s);
+			if (nw->left)
+				nw->left->parent = nw;
+			if (nw->right)
+				nw->right->parent = nw;
+			rm(tmp->getPair());
+			_size++;
+			if NODE_IS_ROOT(s)
+				root = nw;
+			else
+				s->parent->left == s
+					? s->parent->left = nw
+					: s->parent->right = nw;
 			_delete(s);
+		}
+		iterator beg = begin();
+		iterator nd = end();
+		while (beg != nd)
+		{
+			beg.getPtr()->height = max(beg.getPtr()->left, beg.getPtr()->right) + 1;
+			beg++;
 		}
 		_size--;
 		return (true);
 	}
-	node* maxL(node* loc)
+	bool	empty() const { return (!_size ? true : false); }
+	void	clear()
 	{
-		node* i = loc;
-		while (i && i->left)
-			i = i->left;
-		return (i);
-	}
-	node* maxL(node* loc) const
-	{
-		node* i = loc;
-		while (i && i->left)
-			i = i->left;
-		return (i);
-	}
-	node* maxR(node* loc)
-	{
-		node* i = loc;
-		while (i && i->right)
-			i = i->right;
-		return (i);
-	}
-	node* maxR(node* loc) const
-	{
-		node* i = loc;
-		while (i && i->right)
-			i = i->right;
-		return (i);
+		while (root)
+			rm(root->getPair());
 	}
 	int maxDepth(node* node)
 	{
@@ -300,10 +364,10 @@ class BST
 	const_iterator 	end() const { return(iterator(root, NULL, true)); }
 	reverse_iterator	rbegin() { return(reverse_iterator(root, maxR(root), false)); }
 	const_reverse_iterator	rbegin() const { return(reverse_iterator(root, maxR(root), false)); }
-	reverse_iterator	rend() { return(reverse_iterator(root, maxL(root), false)); }
-	const_reverse_iterator	rend() const { return(reverse_iterator(root, maxL(root), false)); }
+	reverse_iterator	rend() { return(reverse_iterator(root, NULL, true)); }
+	const_reverse_iterator	rend() const { return(reverse_iterator(root, NULL, true)); }
+	node* root;
 	private:
-		node* root;
 		size_t _size;
 		Compare cmp;
 		Allocator _Base;

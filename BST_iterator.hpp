@@ -94,8 +94,7 @@ class BST_iterator
 		if (this == &src)
 			return (*this);
 		val = ft::make_pair(src.val_ptr, src.val_nil);
-		/* val_ptr = src.val_ptr; */
-		/* val_nil = src.val_nil; */
+		root = src.root;
 		return (*this);
 	}
 	ptr maxL(ptr loc)
@@ -117,7 +116,7 @@ class BST_iterator
 		if (p->right)
 			return (maxL(p->right));
 		ptr i = p->parent;
-		for (;i && p == i->right;i++)
+		while (i && p == i->right)
 		{
 			p = i;
 			i = i->parent;
@@ -127,9 +126,9 @@ class BST_iterator
 	ptr	inorderPredecessor(ptr p)
 	{
 		if (p->left)
-			return (maxL(p->left));
+			return (maxR(p->left));
 		ptr i = p->parent;
-		for (;i && p == i->left;i++)
+		while (i && p == i->left)
 		{
 			p = i;
 			i = i->parent;
@@ -150,10 +149,6 @@ class BST_iterator
 			val_ptr = NULL;
 			val_nil = true;
 			return (*this);
-		}
-		if (!val_ptr)
-		{
-			_exit(0);
 		}
 		val_ptr = inorderSucessor(val_ptr);
 		return (*this);
@@ -183,6 +178,7 @@ class BST_iterator
 	}
 	bool	getNil() const { return(val_nil); }
 	ptr		getPtr() const { return(val_ptr); }
+	ptr		getRoot() const { return(root); }
 	operator BST_iterator<const T, BST_NODE>(void)
 		{ return(BST_iterator<const T, BST_NODE>(root, val_ptr, val_nil)); }
 	bool operator==(const BST_iterator& src) const
@@ -193,7 +189,9 @@ class BST_iterator
 	}
 	bool operator!=(const BST_iterator& src) const
 	{
-		return (!operator==(src));
+		if (val_nil && src.getNil())
+			return (false);
+		return (getPtr() != src.getPtr());
 	}
 
 };
@@ -221,5 +219,5 @@ $OP_CONTEXT operator==($OP_PARAM_CONTEXT)
 }
 }
 #endif
-#endif
 }
+#endif

@@ -26,7 +26,7 @@ void showTrunks(Trunk *p)
 	std::cout << p->str;
 }
 #define $KEY int
-#define $T int
+#define $T std::string
 void printTree(node<$KEY, $T>* root, Trunk *prev, bool isLeft)
 {
     if (root == NULL) {
@@ -69,48 +69,87 @@ void printTree(node<$KEY, $T>* root, Trunk *prev, bool isLeft)
 	std::cout << "------" << X << "------" << std::endl;\
 	mp.insert(A(X)); \
 	printTree(mp.getRoot(), NULL, false);
+/* int		main(void) */
+/* { */
+/* 	ft::map<int, int> mp; */
+
+/* 	INSERT_AND_PRINT(42); */
+/* 	INSERT_AND_PRINT(50); */
+/* 	INSERT_AND_PRINT(52); */
+/* 	INSERT_AND_PRINT(35); */
+/* 	INSERT_AND_PRINT(45); */
+/* 	INSERT_AND_PRINT(21); */
+/* 	INSERT_AND_PRINT(38); */
+/* 	ft::map<int, int>::iterator beg = mp.begin(); */
+/* 	ft::map<int, int>::iterator end = mp.end(); */
+/* 	mp.clear(); */
+/* 	std::cout << mp.empty() << std::endl; */
+/* 	/1* printTree(mp.getRoot(), NULL, false); *1/ */
+/* 	return (0); */
+/* } */
+template <typename T>
+std::string	printPair(const T &iterator, bool nl = true, std::ostream &o = std::cout)
+{
+	o << "key: " << iterator->first << " | value: " << iterator->second;
+	if (nl)
+		o << std::endl;
+	return ("");
+}
+
+template <typename T_MAP>
+void	printSize(T_MAP const &mp, bool print_content = 1)
+{
+	std::cout << "size: " << mp.size() << std::endl;
+	std::cout << "max_size: " << mp.max_size() << std::endl;
+	if (print_content)
+	{
+		typename T_MAP::const_iterator it = mp.begin(), ite = mp.end();
+		std::cout << std::endl << "Content is:" << std::endl;
+		for (; it != ite; ++it)
+			std::cout << "- " << printPair(it, false) << std::endl;
+	}
+	std::cout << "###############################################" << std::endl;
+}
+#define T1 int
+#define T2 std::string
+#define TESTED_NAMESPACE ft
+typedef TESTED_NAMESPACE::pair<const T1, T2> T3;
+
+static int iter = 0;
+
+template <typename MAP, typename U>
+void	ft_erase(MAP &mp, U param)
+{
+	std::cout << "\t-- [" << iter++ << "] --" << std::endl;
+	mp.erase(param);
+	printSize(mp);
+}
+
+template <typename MAP, typename U, typename V>
+void	ft_erase(MAP &mp, U param, V param2)
+{
+	std::cout << "\t-- [" << iter++ << "] --" << std::endl;
+	mp.erase(param, param2);
+	printSize(mp);
+}
+
+template <typename T>
+T	dec(T it, int n)
+{
+	while (n-- > 0)
+		--it;
+	return (it);
+}
+
 int		main(void)
 {
-	ft::map<int, int> mp;
+	TESTED_NAMESPACE::map<int, int> mp;
+	for (int i = 1; i < 6;i++)
+		mp.insert(TESTED_NAMESPACE::make_pair(i, 0));
+	TESTED_NAMESPACE::map<int, int>::iterator it(mp.begin());
+	TESTED_NAMESPACE::map<int, int>::reverse_iterator rit(it);
 
-	/* INSERT_AND_PRINT(1); */
-	/* INSERT_AND_PRINT(3); */
-	/* INSERT_AND_PRINT(2); */
-	/* INSERT_AND_PRINT(5); */
-	/* INSERT_AND_PRINT(6); */
-	/* INSERT_AND_PRINT(4); */
-	/* INSERT_AND_PRINT(7); */
-
-	/* INSERT_AND_PRINT(3); */
-	/* INSERT_AND_PRINT(2); */
-	/* INSERT_AND_PRINT(1); */
-	/* INSERT_AND_PRINT(-1); */
-	/* INSERT_AND_PRINT(-2); */
-	/* INSERT_AND_PRINT(-3); */
-
-	/* mp.insert(A(3)); */
-	/* mp.insert(A(2)); */
-	/* mp.insert(A(1)); */
-	/* mp.insert(A(-1)); */
-	/* mp.insert(A(-2)); */
-	/* mp.insert(A(-3)); */
-	INSERT_AND_PRINT(42);
-	INSERT_AND_PRINT(50);
-	INSERT_AND_PRINT(35);
-	INSERT_AND_PRINT(45);
-	INSERT_AND_PRINT(21);
-	INSERT_AND_PRINT(38);
-	ft::map<int, int>::iterator beg = mp.begin();
-	ft::map<int, int>::iterator end = mp.end();
-	while (beg != end)
-	{
-		std::cout << (*beg).first << std::endl;
-		beg++;
-	}
-/* 	printTree(mp.getRoot(), NULL, false); */
-	/* mp.insert(A(3)); */
-	/* mp.insert(A(1)); */
-	/* mp.insert(A(2)); */
-    /* printTree(mp.getRoot(), NULL, false); */
+	std::cout << (rit == mp.rend()) << std::endl;
+	std::cout << (it == rit.base()) << std::endl;
 	return (0);
 }
